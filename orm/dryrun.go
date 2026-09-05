@@ -73,16 +73,26 @@ func (db *DB) cloneForDryRun() (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	cp := *db
-	cp.db = sqlDB
-	cp.tx = nil
-	cp.txState = nil
-	cp.stmts = map[string]*sql.Stmt{}
-	cp.prepareStatements = false
-	cp.executionMode = executionModeDryRun
-	cp.dryRun = recorder
+	cp := &DB{
+		db:                  sqlDB,
+		tx:                  nil,
+		ctx:                 db.ctx,
+		dialect:             db.dialect,
+		driverName:          db.driverName,
+		schema:              db.schema,
+		logger:              db.logger,
+		observability:       db.observability,
+		access:              db.access,
+		queryAdvisor:        db.queryAdvisor,
+		prepareStatements:   false,
+		softDeleteByDefault: db.softDeleteByDefault,
+		batchSize:           db.batchSize,
+		executionMode:       executionModeDryRun,
+		dryRun:              recorder,
+		stmts:               map[string]*sql.Stmt{},
+	}
 	recorder.setMetadata("dryrun_id", id)
-	return &cp, nil
+	return cp, nil
 }
 
 func openDryRunSQLDB(recorder *dryRunRecorder) (*sql.DB, string, error) {

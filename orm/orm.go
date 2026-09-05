@@ -319,7 +319,7 @@ func (s *Session) update(ctx context.Context, model any, opts []QueryOption, use
 		extraPreds = append(extraPreds, accessPredicates(ctx, table)...)
 	}
 
-	whereSQL, whereArgs := buildWhereClauses(whereCols, whereArgs, extraPreds, s.db.dialect)
+	whereSQL, whereArgs := buildWhereClauses(whereCols, whereArgs, len(args), extraPreds, s.db.dialect)
 	sqlText, err := s.db.dialect.RenderUpdate(table.Name, set, whereSQL, returningColumns(table))
 	if err != nil {
 		return errkind.Wrap(errkind.KindUnsupportedFeature, "orm: render update", err)
@@ -937,10 +937,10 @@ func conflictColumns(table *schema.Table) []string {
 	return cols
 }
 
-func buildWhereClauses(cols []string, args []any, extra []predicate, d dialect.Dialect) ([]string, []any) {
+func buildWhereClauses(cols []string, args []any, offset int, extra []predicate, d dialect.Dialect) ([]string, []any) {
 	var where []string
 	whereArgs := append([]any(nil), args...)
-	argIndex := len(whereArgs) + 1
+	argIndex := offset + 1
 	for _, col := range cols {
 		where = append(where, d.QuoteIdent(col)+" = "+d.Placeholder(argIndex))
 		argIndex++
@@ -979,12 +979,12 @@ func (s *Session) softDelete(ctx context.Context, model any, table *schema.Table
 	if err != nil {
 		return err
 	}
-	whereSQL, whereArgs := buildWhereClauses(pkCols, pkArgs, accessPredicates(ctx, table), s.db.dialect)
 	set, args := updateSetClauses(table, values, pkCols, s.db.dialect)
 	if len(set) == 0 {
 		set = []string{s.db.dialect.QuoteIdent(soft.Name) + " = " + s.db.dialect.Placeholder(1)}
 		args = []any{now}
 	}
+	whereSQL, whereArgs := buildWhereClauses(pkCols, pkArgs, len(args), accessPredicates(ctx, table), s.db.dialect)
 	sqlText, err := s.db.dialect.RenderUpdate(table.Name, set, whereSQL, nil)
 	if err != nil {
 		return errkind.Wrap(errkind.KindUnsupportedFeature, "orm: render soft delete", err)
@@ -1019,7 +1019,7 @@ func (s *Session) delete(ctx context.Context, model any) error {
 	if len(pkCols) == 0 {
 		return errkind.New(errkind.KindInvalidSchema, "orm: delete requires primary key")
 	}
-	whereSQL, whereArgs := buildWhereClauses(pkCols, pkArgs, accessPredicates(ctx, table), s.db.dialect)
+	whereSQL, whereArgs := buildWhereClauses(pkCols, pkArgs, 0, accessPredicates(ctx, table), s.db.dialect)
 	sqlText, err := s.db.dialect.RenderDelete(table.Name, whereSQL, nil)
 	if err != nil {
 		return errkind.Wrap(errkind.KindUnsupportedFeature, "orm: render delete", err)

@@ -16,10 +16,10 @@ func (placeholderDialect) QuoteIdent(s string) string {
 func (placeholderDialect) Placeholder(i int) string {
 	return "@" + itoa(i)
 }
-func (placeholderDialect) Capabilities() dialect.Capabilities { return dialect.Capabilities{} }
-func (placeholderDialect) ColumnDefinition(*schema.Column) (string, error) { return "", nil }
+func (placeholderDialect) Capabilities() dialect.Capabilities               { return dialect.Capabilities{} }
+func (placeholderDialect) ColumnDefinition(*schema.Column) (string, error)  { return "", nil }
 func (placeholderDialect) RenderOperation(schema.Operation) (string, error) { return "", nil }
-func (placeholderDialect) RenderMigration(*schema.Diff) ([]string, error) { return nil, nil }
+func (placeholderDialect) RenderMigration(*schema.Diff) ([]string, error)   { return nil, nil }
 func (placeholderDialect) RenderSelect(table string, columns []string, where []string, orderBy []string, limit, offset *int) (string, error) {
 	return "", nil
 }
@@ -35,16 +35,16 @@ func (placeholderDialect) RenderDelete(table string, where []string, returning [
 
 func TestBuildWhereClausesUsesDialectQuotingAndPlaceholders(t *testing.T) {
 	cols := []string{"company_id", "user_id"}
-	where, args := buildWhereClauses(cols, []any{"company-1", "user-1"}, []predicate{
+	where, args := buildWhereClauses(cols, []any{"company-1", "user-1"}, 0, []predicate{
 		{expr: "name = ? AND deleted_at IS NULL", args: []any{"alice"}},
 	}, placeholderDialect{})
 	if len(where) != 3 {
 		t.Fatalf("expected 3 clauses, got %d", len(where))
 	}
-	if where[0] != "[company_id] = @3" || where[1] != "[user_id] = @4" {
+	if where[0] != "[company_id] = @1" || where[1] != "[user_id] = @2" {
 		t.Fatalf("expected dialect quoting and placeholders, got %#v", where[:2])
 	}
-	if where[2] != "name = @5 AND deleted_at IS NULL" {
+	if where[2] != "name = @3 AND deleted_at IS NULL" {
 		t.Fatalf("expected placeholder rebinding, got %q", where[2])
 	}
 	if len(args) != 3 {

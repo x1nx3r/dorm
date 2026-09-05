@@ -199,7 +199,7 @@ func TestSessionUpdateWhereUsesExplicitFilters(t *testing.T) {
 	if !strings.Contains(query, `update "users" set`) {
 		t.Fatalf("expected update query, got %q", query)
 	}
-	if !strings.Contains(query, `where status = $1`) {
+	if !strings.Contains(query, `where status = $3`) {
 		t.Fatalf("expected explicit where clause, got %q", query)
 	}
 }
@@ -277,10 +277,10 @@ func TestSessionUpdateWhereAppliesAccessPredicates(t *testing.T) {
 		t.Fatal(err)
 	}
 	query := strings.ToLower(updateTestLastQuery())
-	if !strings.Contains(query, `where name = $1`) {
+	if !strings.Contains(query, `where name = $2`) {
 		t.Fatalf("expected explicit filter, got %q", query)
 	}
-	if !strings.Contains(query, `company_id = $2`) {
+	if !strings.Contains(query, `company_id = $3`) {
 		t.Fatalf("expected access predicate, got %q", query)
 	}
 }

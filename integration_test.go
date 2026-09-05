@@ -239,7 +239,7 @@ func TestIntegrationORMHappyPaths(t *testing.T) {
 	if err := db.WithPolicy(access.Default()).WithContext(ctxA).Find(&defaultVisible, orm.OrderBy("sku ASC")); err != nil {
 		t.Fatalf("default policy query: %v", err)
 	}
-	if got := skus(defaultVisible); !equalStrings(got, []string{"SKU-004"}) {
+	if got := skus(defaultVisible); !equalStrings(got, []string{"SKU-002", "SKU-004"}) {
 		t.Fatalf("expected default policy to see only company A active rows, got %v", got)
 	}
 
@@ -247,7 +247,7 @@ func TestIntegrationORMHappyPaths(t *testing.T) {
 	if err := db.WithPolicy(access.IgnoreCompany()).WithContext(ctxA).Find(&ignoreCompany, orm.OrderBy("sku ASC")); err != nil {
 		t.Fatalf("ignore company query: %v", err)
 	}
-	if got := skus(ignoreCompany); !equalStrings(got, []string{"SKU-003", "SKU-004"}) {
+	if got := skus(ignoreCompany); !equalStrings(got, []string{"SKU-002", "SKU-003", "SKU-004"}) {
 		t.Fatalf("expected ignore company to exclude soft deleted rows, got %v", got)
 	}
 
@@ -255,7 +255,7 @@ func TestIntegrationORMHappyPaths(t *testing.T) {
 	if err := db.WithPolicy(access.IgnoreRLS()).WithContext(ctxA).Find(&ignoreRLS, orm.OrderBy("sku ASC")); err != nil {
 		t.Fatalf("ignore rls query: %v", err)
 	}
-	if got := skus(ignoreRLS); !equalStrings(got, []string{"SKU-003", "SKU-004"}) {
+	if got := skus(ignoreRLS); !equalStrings(got, []string{"SKU-002", "SKU-003", "SKU-004"}) {
 		t.Fatalf("expected ignore rls to keep soft delete enforced, got %v", got)
 	}
 

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sync"
 	"sync/atomic"
 
 	"github.com/dionisius77/dorm/errkind"
@@ -281,13 +280,24 @@ func (db *DB) Tx(ctx context.Context, fn func(*Session) error) error {
 }
 
 func (db *DB) cloneForTransaction(ctx context.Context) *DB {
-	child := *db
-	child.ctx = ctx
-	child.db = db.db
-	child.txMu = sync.Mutex{}
-	child.stmtMu = sync.Mutex{}
-	child.stmts = map[string]*sql.Stmt{}
-	return &child
+	return &DB{
+		db:                  db.db,
+		tx:                  db.tx,
+		ctx:                 ctx,
+		dialect:             db.dialect,
+		driverName:          db.driverName,
+		schema:              db.schema,
+		logger:              db.logger,
+		observability:       db.observability,
+		access:              db.access,
+		queryAdvisor:        db.queryAdvisor,
+		prepareStatements:   db.prepareStatements,
+		softDeleteByDefault: db.softDeleteByDefault,
+		batchSize:           db.batchSize,
+		executionMode:       db.executionMode,
+		dryRun:              db.dryRun,
+		stmts:               map[string]*sql.Stmt{},
+	}
 }
 
 func (db *DB) ensureTransactionOpen(operation string) error {
